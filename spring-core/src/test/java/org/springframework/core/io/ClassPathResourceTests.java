@@ -16,6 +16,11 @@
 
 package org.springframework.core.io;
 
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+import org.springframework.core.OverridingClassLoader;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -26,14 +31,7 @@ import java.util.HashSet;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
-
-import org.springframework.core.OverridingClassLoader;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.io.CleanupMode.NEVER;
 
 /**
@@ -211,6 +209,25 @@ class ClassPathResourceTests {
 		}
 	}
 
+
+	@Test
+	void testResourceLocation() {
+		final String path = "scanned-resources/resource#test1.txt";
+		final var thread = Thread.currentThread();
+		final ClassLoader originalClassLoader = thread.getContextClassLoader();
+		final var url = new Object(){
+			URL value;
+		};
+		thread.setContextClassLoader(ClassLoader.getPlatformClassLoader());
+
+		var classpathResource = new ClassPathResource(path);
+		try{
+			assertThatCode(()-> url.value = classpathResource.getURL()).doesNotThrowAnyException();
+			assertThat(url.value.getFile()).endsWith("test1.txt");
+		}finally {
+			thread.setContextClassLoader(originalClassLoader);
+		}
+	}
 
 	@Test
 	void directoryNotReadable() throws Exception {
