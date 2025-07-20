@@ -27,6 +27,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -212,18 +213,17 @@ class ClassPathResourceTests {
 
 	@Test
 	void testResourceLocation() {
-		final String path = "scanned-resources/resource#test1.txt";
 		final var thread = Thread.currentThread();
 		final ClassLoader originalClassLoader = thread.getContextClassLoader();
-		final var url = new Object(){
-			URL value;
+		final var stringContent = new Object(){
+			String value;
 		};
 		thread.setContextClassLoader(ClassLoader.getPlatformClassLoader());
 
-		var classpathResource = new ClassPathResource(path);
+		var classpathResource = new ClassPathResource("scanned-resources/resource#test1.txt");
 		try{
-			assertThatCode(()-> url.value = classpathResource.getURL()).doesNotThrowAnyException();
-			assertThat(url.value.getFile()).endsWith("test1.txt");
+			assertThatCode(()-> stringContent.value = classpathResource.getContentAsString(StandardCharsets.UTF_8)).doesNotThrowAnyException();
+			assertThat(stringContent.value).hasToString("test 1");
 		}finally {
 			thread.setContextClassLoader(originalClassLoader);
 		}
